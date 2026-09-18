@@ -31,10 +31,18 @@ Keep it simple. No extra services.
 
 | Container | Role |
 |-----------|------|
-| `db` | PostgreSQL |
-| `web` | FastHTML UI (Python): first-time admin setup, login, table list, backup and restore |
+| `homepostgresql-db` | PostgreSQL |
 
-Postgres is published on the Unraid host so other apps can connect to it.
+A FastHTML UI (Python) for first-time admin setup, login, table list, and backup/restore is planned. The database is usable without it.
+
+Postgres listens on all host addresses (`0.0.0.0`) and sits on a Docker network named `home`.
+
+| Who | How to connect |
+|-----|----------------|
+| PC, phone, or other device on the LAN | `192.168.1.130:5432` |
+| Other Docker containers on Unraid | Join the `home` network, host `homepostgresql-db`, port `5432` |
+
+User, password, and database name come from `.env`.
 
 ## Unraid
 

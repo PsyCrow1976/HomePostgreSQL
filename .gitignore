@@ -1,6 +1,7 @@
 .env
 postgres/
 *.sql
+docker-compose.override.yml
 __pycache__/
 .venv/
 venv/

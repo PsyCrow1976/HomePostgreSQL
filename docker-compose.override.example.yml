@@ -1,0 +1,11 @@
+# Optional Unraid override — copy to docker-compose.override.yml
+#
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+#
+# Stores PostgreSQL data on Unraid appdata for easier backup.
+# Docker Compose merges this file automatically with docker-compose.yml.
+
+services:
+  db:
+    volumes:
+      - /mnt/user/appdata/homepostgresql/postgres:/var/lib/postgresql/data

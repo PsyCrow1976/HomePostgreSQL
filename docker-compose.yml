@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: homepostgresql-db
+    hostname: homepostgresql-db
+    restart: unless-stopped
+    # 0.0.0.0 = PCs and phones on the LAN, not only Unraid itself.
+    ports:
+      - "0.0.0.0:${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-home}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-home}
+      TZ: ${TZ:-Europe/Copenhagen}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-home} -d ${POSTGRES_DB:-home}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - home
+    labels:
+      net.unraid.docker.description: "Shared home PostgreSQL"
+
+# Fixed name so other Unraid compose stacks can join this network
+# and reach the database as host homepostgresql-db (port 5432 inside Docker).
+networks:
+  home:
+    name: home
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
