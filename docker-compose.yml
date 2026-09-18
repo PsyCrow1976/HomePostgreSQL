@@ -24,6 +24,29 @@ services:
     labels:
       net.unraid.docker.description: "Shared home PostgreSQL"
 
+  web:
+    build: .
+    container_name: homepostgresql-web
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:${HTTP_PORT:-8087}:8000"
+    environment:
+      POSTGRES_HOST: homepostgresql-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-home}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-home}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      TZ: ${TZ:-Europe/Copenhagen}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - home
+    labels:
+      net.unraid.docker.webui: "http://[IP]:[PORT:8087]/"
+      net.unraid.docker.description: "HomePostgreSQL admin UI"
+
 # Fixed name so other Unraid compose stacks can join this network
 # and reach the database as host homepostgresql-db (port 5432 inside Docker).
 networks:
