@@ -9,6 +9,7 @@ from urllib.parse import quote_plus
 import psycopg
 from fasthtml.common import *
 from psycopg import sql
+from psycopg.errors import UniqueViolation
 from starlette.datastructures import UploadFile
 from starlette.responses import RedirectResponse, Response
 
@@ -145,14 +146,29 @@ def sql_download(content: bytes, filename: str):
     )
 
 
-def redirect_home(msg=None, err=None):
+def redirect_to(path="/", msg=None, err=None):
     q = []
     if msg:
         q.append(f"msg={quote_plus(msg)}")
     if err:
         q.append(f"err={quote_plus(err[:300])}")
     suffix = ("?" + "&".join(q)) if q else ""
-    return RedirectResponse("/" + suffix, status_code=303)
+    return RedirectResponse(path + suffix, status_code=303)
+
+
+def redirect_home(msg=None, err=None):
+    return redirect_to("/", msg=msg, err=err)
+
+
+def user_form_error(username, password, confirm):
+    username = (username or "").strip()
+    if not username:
+        return "Username is required."
+    if len(password or "") < 8:
+        return "Password must be at least 8 characters."
+    if password != confirm:
+        return "Passwords do not match."
+    return None
 
 
 def auth(req, session):
@@ -190,6 +206,8 @@ def layout(*content, title="HomePostgreSQL", session=None, msg=None, err=None):
     if session and session.get("user_id"):
         nav = P(
             A("Tables", href="/"),
+            " | ",
+            A("Users", href="/users"),
             " | ",
             A("Logout", href="/logout"),
             f"  ({session.get('username', '')})",
@@ -232,13 +250,7 @@ def setup_post(username: str, password: str, confirm: str):
     if admin_exists():
         return RedirectResponse("/login", status_code=303)
     username = (username or "").strip()
-    err = None
-    if not username:
-        err = "Username is required."
-    elif len(password or "") < 8:
-        err = "Password must be at least 8 characters."
-    elif password != confirm:
-        err = "Passwords do not match."
+    err = user_form_error(username, password, confirm)
     if err:
         return layout(P(err, cls="err"), A("Back", href="/setup"), title="Create admin account")
     with connect() as conn:
@@ -345,6 +357,74 @@ def home(session, msg: str = "", err: str = ""):
         msg=msg or None,
         err=err or None,
     )
+
+
+@rt("/users", methods=["GET"])
+def users_get(session, msg: str = "", err: str = ""):
+    with connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, username, is_admin, created_at
+            FROM users
+            ORDER BY id
+            """
+        ).fetchall()
+    body = Tbody(
+        *[
+            Tr(
+                Td(str(uid)),
+                Td(uname),
+                Td("yes" if is_admin else "no"),
+                Td("" if created is None else str(created)),
+            )
+            for uid, uname, is_admin, created in rows
+        ]
+    )
+    return layout(
+        Table(
+            Thead(Tr(Th("Id"), Th("Username"), Th("Admin"), Th("Created"))),
+            body,
+        ),
+        H3("Create user"),
+        P("New accounts go in the shared users table. Only admin accounts can log in to this UI."),
+        Form(
+            Label("Username", Input(name="username", required=True, autofocus=True)),
+            Label("Password", Input(name="password", type="password", required=True)),
+            Label("Confirm password", Input(name="confirm", type="password", required=True)),
+            Label(
+                Input(type="checkbox", name="is_admin"),
+                " Admin (can log in to this UI)",
+            ),
+            Button("Create user"),
+            method="post",
+            action="/users",
+        ),
+        title="Users",
+        session=session,
+        msg=msg or None,
+        err=err or None,
+    )
+
+
+@rt("/users", methods=["POST"])
+def users_post(session, username: str, password: str, confirm: str, is_admin: str = ""):
+    username = (username or "").strip()
+    err = user_form_error(username, password, confirm)
+    if err:
+        return redirect_to("/users", err=err)
+    make_admin = bool(is_admin)
+    try:
+        with connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO users (username, password_hash, is_admin)
+                VALUES (%s, %s, %s)
+                """,
+                (username, hash_password(password), make_admin),
+            )
+    except UniqueViolation:
+        return redirect_to("/users", err="That username already exists.")
+    return redirect_to("/users", msg=f"Created user {username}")
 
 
 @rt("/table/{schema}/{name}", methods=["GET"])

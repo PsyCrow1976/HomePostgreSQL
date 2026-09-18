@@ -14,7 +14,7 @@ The first database is a shared **users** database. Other apps can use those acco
 
 The first time the stack starts, a simple Python + FastHTML web page is used to create the admin account for that user database.
 
-After that you can log in to the same UI, see the tables in the database, and backup (export) or restore (import) selected tables or the whole home database.
+After that you can log in to the same UI, create users for other apps, see the tables in the database, and backup (export) or restore (import) selected tables or the whole home database.
 
 Keep it simple. No extra services.
 
@@ -24,7 +24,7 @@ Keep it simple. No extra services.
 2. Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` in `.env`.
 3. Start the stack.
 4. Open the web UI and create the admin user (first start only).
-5. Log in, look at tables, export or import as needed.
+5. Log in, create users, look at tables, export or import as needed.
 6. Point other home apps at this Postgres host and port.
 
 ## Stack
@@ -32,7 +32,7 @@ Keep it simple. No extra services.
 | Container | Role |
 |-----------|------|
 | `homepostgresql-db` | PostgreSQL |
-| `homepostgresql-web` | FastHTML UI (Python): first-time admin setup, login, table list, backup and restore |
+| `homepostgresql-web` | FastHTML UI (Python): first-time admin setup, login, users, table list, backup and restore |
 
 Postgres listens on all host addresses (`0.0.0.0`) and sits on a Docker network named `home`.
 
