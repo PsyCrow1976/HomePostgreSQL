@@ -44,6 +44,10 @@ Postgres listens on all host addresses (`0.0.0.0`) and sits on a Docker network 
 
 User, password, and database name come from `.env`.
 
+## Status
+
+Version `0.0.1`. See [CHANGELOG.md](CHANGELOG.md).
+
 ## Unraid
 
 See **[deploy.md](deploy.md)** for how to run it on the Unraid server.
