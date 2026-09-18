@@ -2,8 +2,8 @@
 
 PostgreSQL started with Docker Compose. Reachable from the home LAN and from other Unraid containers.
 
-**Server:** `192.168.1.130`  
-**Postgres (LAN):** `192.168.1.130:5432`  
+**Server:** `192.168.*.*`  
+**Postgres (LAN):** `192.168.*.*:5432`  
 **Postgres (other Unraid containers):** host `homepostgresql-db` on network `home`
 
 | Container | Role |
@@ -19,7 +19,7 @@ See **[README.md](README.md)** for what this is for. This file is only how to ru
 SSH in:
 
 ```bash
-ssh root@192.168.1.130
+ssh user@192.168.*.*
 ```
 
 Need Docker, `docker compose`, and git. Port **5432** must be free on Unraid (or change `POSTGRES_PORT` in `.env`).
@@ -98,7 +98,7 @@ User, password, and database are the values in `.env`.
 
 ### Devices on the home network (PC, phone, another machine)
 
-Connect to **`192.168.1.130:5432`**.
+Connect to **`192.168.*.*:5432`**.
 
 The compose file binds Postgres to `0.0.0.0`, so it is reachable on the Unraid LAN IP, not only localhost.
 
@@ -127,7 +127,7 @@ Inside Docker the port is always `5432`. `POSTGRES_PORT` only changes the LAN po
 
 ### Other Docker containers via the LAN IP
 
-You can also use `192.168.1.130:5432` from a container. On Unraid that often needs **Settings → Docker → Host access to custom networks → Enabled**. Joining the `home` network above avoids that.
+You can also use `192.168.*.*:5432` from a container. On Unraid that often needs **Settings → Docker → Host access to custom networks → Enabled**. Joining the `home` network above avoids that.
 
 ---
 
@@ -143,9 +143,7 @@ docker compose up -d
 
 ## Backup and restore
 
-Use the web UI to export or import selected tables or the whole home database.
-
-From the command line, a full dump:
+Full dump from the command line:
 
 ```bash
 cd /mnt/user/appdata/homepostgresql
